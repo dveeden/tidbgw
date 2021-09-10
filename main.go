@@ -86,13 +86,11 @@ func main() {
 					}
 					log.Printf("Adding backend %s\n", backendHostname)
 					backends = append(backends, backendHostname)
-					log.Println(backends)
 				case clientv3.EventTypeDelete:
 					log.Printf("Removing backend %s\n", backendHostname)
 					for i, b := range backends {
 						if b == backendHostname {
 							backends = append(backends[:i], backends[i+1:]...)
-							log.Println(backends)
 							goto end
 						}
 					}
