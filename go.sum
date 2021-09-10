@@ -1,0 +1,4 @@
+github.com/coreos/etcd v2.3.8+incompatible h1:Lkp5dgqMANTjq0UW74OP1H8yCDQT0In4jrw6xfcNlGE=
+github.com/coreos/etcd v2.3.8+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
+go.etcd.io/etcd v2.3.8+incompatible h1:m5lZwb9yKkh27IFgPQWTdiaG/9waG7AWy0NSHedy3Mk=
+go.etcd.io/etcd v2.3.8+incompatible/go.mod h1:yaeTdrJi5lOmYerz05bd8+V7KubZs8YSFZfzsF9A6aI=
