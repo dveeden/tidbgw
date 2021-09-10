@@ -24,7 +24,6 @@ func connectionHandler(listener net.Listener, backends *[]string) {
 			log.Println("No backends available")
 			conn.Close()
 		} else {
-			// TODO: Maybe use the HTTP status API to check the health of backends
 			rand.Seed(time.Now().UnixNano())
 			choice := rand.Int() % len(*backends)
 			backend := (*backends)[choice]
@@ -67,7 +66,6 @@ func main() {
 	backends := []string{}
 	go connectionHandler(listener, &backends)
 
-	// TODO: Check for hosts that are gone
 	rch := cli.Watch(context.Background(), "/topology/tidb/",
 		clientv3.WithPrefix(),
 		clientv3.WithPrevKV(),
