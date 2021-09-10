@@ -24,11 +24,11 @@ func connectionHandler(listener net.Listener, backends *[]string) {
 			log.Println("No backends available")
 			conn.Close()
 		} else {
-			// TODO: Maybe use the HTTP status API to check the health of backens
+			// TODO: Maybe use the HTTP status API to check the health of backends
 			rand.Seed(time.Now().UnixNano())
 			choice := rand.Int() % len(*backends)
 			backend := (*backends)[choice]
-			proxyConn(conn, backend)
+			go proxyConn(conn, backend)
 		}
 	}
 }
