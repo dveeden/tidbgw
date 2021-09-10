@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func connectionHandler(listener net.Listener, backends *[]string) {
@@ -68,20 +68,37 @@ func main() {
 	go connectionHandler(listener, &backends)
 
 	// TODO: Check for hosts that are gone
-	rch := cli.Watch(context.Background(), "/topology/tidb/", clientv3.WithPrefix())
+	rch := cli.Watch(context.Background(), "/topology/tidb/",
+		clientv3.WithPrefix(),
+		clientv3.WithPrevKV(),
+	)
+
 	for wresp := range rch {
 		for _, ev := range wresp.Events {
-			if strings.HasSuffix(string(ev.Kv.Key), "/info") {
+			if strings.HasSuffix(string(ev.Kv.Key), "/ttl") {
 				parts := strings.Split(string(ev.Kv.Key), "/")
 				backendHostname := parts[3]
 
-				for _, b := range backends {
-					if b == backendHostname {
-						goto end
+				switch ev.Type {
+				case clientv3.EventTypePut:
+					for _, b := range backends {
+						if b == backendHostname {
+							goto end
+						}
+					}
+					log.Printf("Adding backend %s\n", backendHostname)
+					backends = append(backends, backendHostname)
+					log.Println(backends)
+				case clientv3.EventTypeDelete:
+					log.Printf("Removing backend %s\n", backendHostname)
+					for i, b := range backends {
+						if b == backendHostname {
+							backends = append(backends[:i], backends[i+1:]...)
+							log.Println(backends)
+							goto end
+						}
 					}
 				}
-				log.Printf("Adding backend %s\n", backendHostname)
-				backends = append(backends, backendHostname)
 			end:
 			}
 		}

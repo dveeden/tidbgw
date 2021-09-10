@@ -21,8 +21,7 @@ Connect your MySQL client to port 4009. TiDB Gateway will pick a random TiDB bac
 
 The gateway will detect new TiDB hosts and add these to the list of backends.
 
-## Future
+## Ideas for future versions
 
-* Important: Detect removed/down hosts and automatically remove
 * Use the HTTP Status API
 * Filter based on labels of servers
