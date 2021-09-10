@@ -2,16 +2,28 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
 	"net"
+	"net/http"
 	"strings"
 	"time"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
+
+type status struct {
+	Version         string
+	Git_hash        string
+	Status_port     int
+	Deploy_path     string
+	Start_timestamp int32
+	Labels          []string `json:"-"`
+}
 
 func connectionHandler(listener net.Listener, backends *[]string) {
 	for {
@@ -73,6 +85,25 @@ func main() {
 
 	for wresp := range rch {
 		for _, ev := range wresp.Events {
+			if strings.HasSuffix(string(ev.Kv.Key), "/info") {
+				parts := strings.Split(string(ev.Kv.Key), "/")
+				backendHostname := parts[3]
+				j := status{}
+				err = json.Unmarshal(ev.Kv.Value, &j)
+				if err != nil {
+					log.Fatal(err)
+				}
+				resp, err := http.Get(
+					fmt.Sprintf(
+						"http://%s:%d/", strings.Split(backendHostname, ":")[0],
+						j.Status_port,
+					),
+				)
+				if err != nil {
+					log.Fatal(err)
+				}
+				log.Printf("Status probe for %s has response: %s (not used)\n", backendHostname, resp.Status)
+			}
 			if strings.HasSuffix(string(ev.Kv.Key), "/ttl") {
 				parts := strings.Split(string(ev.Kv.Key), "/")
 				backendHostname := parts[3]
@@ -86,13 +117,11 @@ func main() {
 					}
 					log.Printf("Adding backend %s\n", backendHostname)
 					backends = append(backends, backendHostname)
-					log.Println(backends)
 				case clientv3.EventTypeDelete:
 					log.Printf("Removing backend %s\n", backendHostname)
 					for i, b := range backends {
 						if b == backendHostname {
 							backends = append(backends[:i], backends[i+1:]...)
-							log.Println(backends)
 							goto end
 						}
 					}
